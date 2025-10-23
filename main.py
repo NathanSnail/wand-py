@@ -142,7 +142,10 @@ def tick():
 
 spells = []
 if load_wand:
-    spells = [x[1:-1] for x in open("wands/" + str(wand_counter), "r").read()[1:-1].split(", ")]
+    spells = [
+        x[1:-1]
+        for x in open("wands/" + str(wand_counter), "r").read()[1:-1].split(", ")
+    ]
     print(spells)
 sel = 0
 
@@ -179,6 +182,10 @@ def render():
             if x >= 26:
                 y += 1
                 x = 0
+
+
+def get_cmd() -> str:
+    return "luajit main.lua -da -ln en -sc 26 -sp " + " ".join(spells)
 
 
 # Game loop
@@ -255,10 +262,10 @@ while running:
                     pass
             except ValueError:
                 pass
-            if event.mod == 64:
+            if event.key == pygame.K_LCTRL:
                 sel -= 1
                 sel = max(0, sel)
-            elif event.mod == 1:
+            elif event.key == pygame.K_LSHIFT:
                 sel += 1
                 sel = min(len(spells), sel)
             if event.unicode == "\r":
@@ -267,7 +274,7 @@ while running:
                     sel -= 1
                 except IndexError:
                     pass
-            if event.key == 1073742053:
+            if event.key == pygame.K_RSHIFT:
                 if len(spells) == 0:
                     continue
                 rect = pygame.Rect(2, 2, 42 * len(spells), 40)
@@ -275,20 +282,10 @@ while running:
                 scr.blit(screen, area=rect, dest=(0, 0))
                 pygame.image.save(scr, "temp.png")
                 send_to_clipboard()
-            if event.key == 1073742052:
+            if event.key == pygame.K_RCTRL:
                 print(spells)
                 ps = subprocess.Popen(
-                    [
-                        "luajit",
-                        "/home/nathan/Documents/code/wand_eval_tree/main.lua",
-                        "-da",
-                        "-ln",
-                        "en",
-                        "-sc",
-                        "26",
-                        "-sp",
-                    ]
-                    + [x for x in spells],
+                    get_cmd().split(" "),
                     cwd="/home/nathan/Documents/code/wand_eval_tree/",
                     stdout=subprocess.PIPE,
                 )
@@ -296,10 +293,7 @@ while running:
                 ps.wait()
             if event.unicode == "\\":
                 ps = subprocess.Popen(
-                    [
-                        "echo",
-                        "luajit main.lua -da -ln en -sc 26 -sp " + " ".join(spells),
-                    ],
+                    ["echo", get_cmd()],
                     stdout=subprocess.PIPE,
                 )
                 subprocess.Popen(["xclip", "-selection", "clipboard"], stdin=ps.stdout)
